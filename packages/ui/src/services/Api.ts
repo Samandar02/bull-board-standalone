@@ -41,13 +41,109 @@ import { toastManager } from './toastManager';
  */
 const CLIENT_HANDLED_ERROR_CODES = ['JOB_BELONGS_TO_JOB_SCHEDULER'];
 
+export interface RedisInstanceDTO {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  hasPassword?: boolean;
+  db: number;
+  tls: number | boolean;
+  prefix: string;
+  status?: 'online' | 'offline';
+  latencyMs?: number;
+  version?: string;
+  activeDbKeys?: number;
+  error?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RedisDatabaseInfoDTO {
+  index: number;
+  keysCount: number;
+  hasKeys: boolean;
+}
+
 export class Api {
   private axios: AxiosInstance;
+  private activeInstanceId: string | null = null;
+  private activeDb: number | null = null;
+  private basePath: string = '';
 
   constructor({ basePath }: { basePath: string } = { basePath: '' }) {
-    this.axios = Axios.create({ baseURL: `${basePath}api` });
+    this.basePath = basePath.endsWith('/') ? basePath : `${basePath}/`;
+    if (this.basePath === '/') this.basePath = '';
+
+    this.axios = Axios.create({ baseURL: `${this.basePath}api` });
+    
+    this.axios.interceptors.request.use((config) => {
+      // If an instance is active and request is not for instances API
+      if (this.activeInstanceId && !config.url?.startsWith('/instances')) {
+        config.baseURL = `${this.basePath}/api/instances/${this.activeInstanceId}/board/api`.replace('//', '/');
+        if (this.activeDb !== null && this.activeDb !== undefined) {
+          config.headers['x-redis-db'] = String(this.activeDb);
+        }
+      } else {
+        config.baseURL = `${this.basePath}/api`.replace('//', '/');
+      }
+      return config;
+    });
+
     this.axios.interceptors.response.use(this.handleResponse, this.handleError);
   }
+
+  public setInstance(instanceId: string | null, db?: number | null) {
+    this.activeInstanceId = instanceId;
+    if (db !== undefined) {
+      this.activeDb = db;
+    }
+  }
+
+  public getInstance() {
+    return {
+      instanceId: this.activeInstanceId,
+      db: this.activeDb,
+    };
+  }
+
+  // Instances API
+  public getInstances(): Promise<RedisInstanceDTO[]> {
+    return this.axios.get('/instances');
+  }
+
+  public getInstanceDetails(id: string): Promise<RedisInstanceDTO> {
+    return this.axios.get(`/instances/${id}`);
+  }
+
+  public createInstance(data: Partial<RedisInstanceDTO>): Promise<RedisInstanceDTO> {
+    return this.axios.post('/instances', data);
+  }
+
+  public updateInstance(id: string, data: Partial<RedisInstanceDTO>): Promise<RedisInstanceDTO> {
+    return this.axios.put(`/instances/${id}`, data);
+  }
+
+  public deleteInstance(id: string): Promise<{ success: boolean; id: string }> {
+    return this.axios.delete(`/instances/${id}`);
+  }
+
+  public testConnection(data: Partial<RedisInstanceDTO>): Promise<{
+    success: boolean;
+    latencyMs?: number;
+    version?: string;
+    databases?: RedisDatabaseInfoDTO[];
+    error?: string;
+  }> {
+    return this.axios.post('/instances/test', data);
+  }
+
+  public getInstanceDatabases(id: string): Promise<RedisDatabaseInfoDTO[]> {
+    return this.axios.get(`/instances/${id}/databases`);
+  }
+
 
   public getQueues({
     activeQueue,

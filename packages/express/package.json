@@ -14,7 +14,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/felixmosh/bull-board.git",
+    "url": "git+https://github.com/Samandar02/bull-board.git",
     "directory": "packages/express"
   },
   "license": "MIT",
@@ -24,9 +24,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "yarn clean && tsc",
-    "clean": "rm -rf dist",
-    "test": "jest"
+    "build": "yarn clean && yarn tsc",
+    "clean": "node -e \"fs.rmSync('dist', {recursive: true, force: true})\""
   },
   "dependencies": {
     "@bull-board/api": "9.10.4",
@@ -35,16 +34,9 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@bull-board/test-utils": "9.10.4",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
-    "@types/supertest": "^7.2.1",
-    "bullmq": "^5.81.5",
-    "express-v4": "npm:express@^4",
-    "express-v5": "npm:express@^5",
-    "jest": "^30.5.2",
-    "supertest": "^7.3.0",
-    "ts-jest": "^29.4.14"
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public"

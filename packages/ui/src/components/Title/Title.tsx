@@ -20,26 +20,24 @@ export const Title = () => {
 
   if (!queue || isMobile) return <div />;
 
+  const queueTitle = queue.displayName || queue.name;
+
   return (
     <div className={s.queueTitle}>
-      {queue.displayName && (
-        <>
-          <div className={s.titleRow}>
-            <h1 className={s.name} title={queue.displayName}>
-              {queue.displayName}
-            </h1>
-            <Button
-              className={s.infoButton}
-              onClick={() => setInfoOpen(true)}
-              title={t('QUEUE.INFO.TITLE')}
-              aria-label={t('QUEUE.INFO.TITLE')}
-            >
-              <InfoIcon className={s.infoIcon} />
-            </Button>
-          </div>
-          {queue.description && <p className={s.description}>{queue.description}</p>}
-        </>
-      )}
+      <div className={s.titleRow}>
+        <h1 className={s.name} title={queueTitle}>
+          {queueTitle}
+        </h1>
+        <Button
+          className={s.infoButton}
+          onClick={() => setInfoOpen(true)}
+          title={t('QUEUE.INFO.TITLE')}
+          aria-label={t('QUEUE.INFO.TITLE')}
+        >
+          <InfoIcon className={s.infoIcon} />
+        </Button>
+      </div>
+      {queue.description && <p className={s.description}>{queue.description}</p>}
       <Suspense fallback={null}>
         {infoOpen && (
           <QueueInfoModalLazy open={infoOpen} queue={queue} onClose={() => setInfoOpen(false)} />

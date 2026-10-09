@@ -12,52 +12,36 @@
     "redis"
   ],
   "bugs": {
-    "url": "https://github.com/felixmosh/bull-board/issues"
+    "url": "https://github.com/Samandar02/bull-board/issues"
   },
   "license": "MIT",
-  "author": "felixmosh",
-  "contributors": [
-    "Erik Engervall <erik.engervall@gmail.com>",
-    "felixmosh",
-    "Dennis Snijder <dennis@snijder.io>"
-  ],
+  "author": "Samandar02",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/felixmosh/bull-board.git"
+    "url": "git+https://github.com/Samandar02/bull-board.git"
   },
   "workspaces": [
-    "packages/*",
-    "website",
-    "website/demo"
+    "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach -A -t --exclude '@bull-board/website' --exclude '@bull-board/demo' run build",
-    "clean": "yarn workspaces foreach -A --exclude '@bull-board/website' --exclude '@bull-board/demo' run clean",
-    "postinstall": "npx simple-git-hooks",
-    "dev": "concurrently --names \"UI,API\" -c \"bgBlue.bold,bgMagenta.bold\" \"yarn dev:ui\" \"yarn dev:server\"",
+    "build": "yarn workspaces foreach -A -t run build",
+    "clean": "yarn workspaces foreach -A run clean",
+    "start": "yarn workspace @bull-board/server start",
+    "dev": "concurrently --names \"UI,SERVER\" -c \"bgBlue.bold,bgMagenta.bold\" \"yarn dev:ui\" \"yarn dev:server\"",
     "dev:docker": "docker compose -f docker-compose.redis.yml up -d",
-    "dev:server": "ts-node-dev --rs example.ts",
+    "dev:server": "yarn workspace @bull-board/server dev",
     "dev:ui": "yarn workspace @bull-board/ui run dev",
     "lint": "oxlint './packages/**/*.{ts,tsx}' . --fix",
     "lint:check": "oxlint './packages/**/*.{ts,tsx}' .",
-    "format": "oxfmt './packages/**/*.{ts,tsx}' './examples/**/*.{ts,tsx}'",
-    "format:check": "oxfmt './packages/**/*.{ts,tsx}' './examples/**/*.{ts,tsx}' --check",
-    "prepublishOnly": "yarn build",
-    "release": "release-it",
-    "test": "yarn workspaces foreach -A --exclude '@bull-board/website' --exclude '@bull-board/demo' --exclude '@bull-board/bun' --exclude '@bull-board/ui' run test",
-    "test:ui": "yarn workspace @bull-board/ui test"
+    "format": "oxfmt './packages/**/*.{ts,tsx}'",
+    "format:check": "oxfmt './packages/**/*.{ts,tsx}' --check"
   },
   "devDependencies": {
-    "@release-it-plugins/workspaces": "^6.0.0",
     "@types/node": "^22.20.1",
-    "auto-changelog": "^2.7.0",
     "concurrently": "^10.0.5",
     "ioredis": "^6.0.0",
-    "lint-staged": "^17.6.0",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
-    "release-it": "^19.2.4",
-    "simple-git-hooks": "^2.14.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   },
@@ -65,68 +49,5 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0"
   },
-  "simple-git-hooks": {
-    "pre-commit": "npx lint-staged"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": "oxfmt"
-  },
-  "auto-changelog": {
-    "ignoreCommitPattern": "^release: |^chore: release|^Release \\d",
-    "replaceText": {
-      "(^chore:\\s*)": "",
-      "(^chore\\([^)]*\\):\\s*)": "",
-      "(^chore\\(deps-dev\\):\\s*)": "",
-      "(^chore\\(deps\\):\\s*)": "",
-      "(^docs:\\s*)": "",
-      "(^docs\\([^)]*\\):\\s*)": "",
-      "(^feat:\\s*)": "",
-      "(^feat\\([^)]*\\):\\s*)": "",
-      "(^fix:\\s*)": "",
-      "(^fix\\([^)]*\\):\\s*)": "",
-      "(^perf:\\s*)": "",
-      "(^perf\\([^)]*\\):\\s*)": "",
-      "(^refactor:\\s*)": "",
-      "(^refactor\\([^)]*\\):\\s*)": "",
-      "(^style:\\s*)": "",
-      "(^style\\([^)]*\\):\\s*)": "",
-      "(^test:\\s*)": "",
-      "(^test\\([^)]*\\):\\s*)": ""
-    }
-  },
-  "packageManager": "yarn@4.17.0",
-  "release-it": {
-    "plugins": {
-      "@release-it-plugins/workspaces": {
-        "skipChecks": true,
-        "publish": false
-      }
-    },
-    "npm": false,
-    "git": {
-      "commit": true,
-      "commitMessage": "release: v${version}",
-      "tag": true,
-      "tagName": "v${version}",
-      "tagAnnotation": "v${version}",
-      "changelog": "npx auto-changelog --stdout --commit-limit false -u --template https://raw.githubusercontent.com/release-it/release-it/master/templates/changelog-compact.hbs"
-    },
-    "hooks": {
-      "before:init": [
-        "yarn",
-        "yarn lint",
-        "yarn format"
-      ],
-      "after:bump": [
-        "yarn",
-        "yarn build",
-        "yarn test",
-        "yarn test:ui",
-        "npx auto-changelog -p --template .auto-changelog.template.hbs --handlebars-setup .auto-changelog-helpers.js"
-      ]
-    },
-    "github": {
-      "release": false
-    }
-  }
+  "packageManager": "yarn@4.17.0"
 }

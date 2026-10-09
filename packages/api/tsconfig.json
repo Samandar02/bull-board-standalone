@@ -6,7 +6,7 @@
     "module": "CommonJS",
     "rootDir": "./src",
     "noImplicitAny": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "strict": true,
     "target": "es2019",
     "noUnusedParameters": true,
@@ -14,7 +14,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "skipLibCheck": true,
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "include": ["./src", "./typings/*.ts"]
 }

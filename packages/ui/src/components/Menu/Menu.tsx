@@ -32,9 +32,14 @@ export const Menu = () => {
   const collapseAll = useMenuState((state) => state.collapseAll);
 
   const tree = toTree(
-    queues?.filter((queue: any) =>
-      queue.name?.toLowerCase().includes(searchTerm?.toLowerCase() as string)
-    ) || [],
+    queues?.filter((queue: any) => {
+      const term = searchTerm?.toLowerCase() || '';
+      return (
+        !term ||
+        queue.name?.toLowerCase().includes(term) ||
+        queue.displayName?.toLowerCase().includes(term)
+      );
+    }) || [],
     sortQueues
   );
 

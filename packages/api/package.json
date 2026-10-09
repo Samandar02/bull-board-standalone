@@ -14,7 +14,7 @@
   "author": "felixmosh",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/felixmosh/bull-board.git",
+    "url": "git+https://github.com/Samandar02/bull-board.git",
     "directory": "packages/api"
   },
   "files": [
@@ -39,34 +39,20 @@
     "access": "public"
   },
   "scripts": {
-    "build": "yarn clean && tsc",
-    "clean": "rm -rf dist",
-    "openapi": "ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\"}' scripts/generateOpenApi.ts",
-    "test": "jest && jest --config jest.config.bullmq-floor.js",
-    "test:coverage": "jest --config jest.config.coverage.js",
-    "typecheck:bullmq": "tsc -p tsconfig.bullmq-floor.json && tsc -p tsconfig.bullmq-v5.json && tsc -p tsconfig.bullmq-v6.json"
+    "build": "yarn clean && yarn tsc",
+    "clean": "node -e \"fs.rmSync('dist', {recursive: true, force: true})\""
   },
   "dependencies": {
     "redis-info": "^3.1.0",
     "valibot": "^1.5.0"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "@types/pg": "^8.23.1",
+    "@types/node": "^22.20.1",
     "@types/redis-info": "^3.0.3",
-    "@types/supertest": "^7.2.1",
-    "@valibot/to-json-schema": "^1.8.0",
     "bull": "^4.16.5",
     "bullmq": "^5.81.5",
-    "bullmq-v5": "npm:bullmq@^5",
-    "bullmq-v5-floor": "npm:bullmq@5.56.0",
-    "bullmq-v6": "npm:bullmq@^6",
     "ioredis": "^6.0.0",
-    "jest": "^30.5.2",
-    "pg": "^8.23.1",
-    "supertest": "^7.3.0",
-    "ts-jest": "^29.4.14",
-    "ts-node": "^10.9.2"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "@bull-board/ui": "9.10.4",

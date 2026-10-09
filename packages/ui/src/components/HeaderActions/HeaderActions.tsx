@@ -11,6 +11,8 @@ import { Settings } from '../Icons/Settings';
 import buttonStyles from '../Button/Button.module.css';
 import s from './HeaderActions.module.css';
 
+import { InstanceSwitcher } from '../InstanceSwitcher/InstanceSwitcher';
+
 type ModalTypes = 'redis' | 'settings';
 
 const RedisStatsModalLazy = React.lazy(() =>
@@ -31,16 +33,43 @@ const onClickFullScreen = async () => {
   return document.exitFullscreen();
 };
 
+import { useLocation, NavLink } from 'react-router-dom';
+
 const DOCS_URL = 'https://felixmosh.github.io/bull-board/';
 const DOCS_LABEL = 'Docs';
 
 export const HeaderActions = () => {
   const { miscLinks = [], hideRedisDetails = false, hideDocsLink = false } = useUIConfig();
   const modal = useModal<ModalTypes>();
+  const location = useLocation();
+  const isInstancesPage = location.pathname === '/' || location.pathname === '/instances';
 
   return (
     <>
       <ul className={s.actions}>
+        <li>
+          <InstanceSwitcher />
+        </li>
+        {!isInstancesPage && (
+          <li>
+            <NavLink
+              to="/"
+              title="All Redis Instances"
+              className={cn(s.button, buttonStyles.button, buttonStyles.default)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.825rem',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                textDecoration: 'none',
+              }}
+            >
+              🗄️ All Instances
+            </NavLink>
+          </li>
+        )}
         {!hideRedisDetails && (
           <li>
             <Button onClick={() => modal.open('redis')} className={s.button}>

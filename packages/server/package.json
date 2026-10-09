@@ -1,0 +1,31 @@
+{
+  "name": "@bull-board/server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Standalone Multi-Instance Bull Board Server",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "node -e \"fs.rmSync('dist', {recursive: true, force: true})\" && yarn tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@bull-board/api": "workspace:*",
+    "@bull-board/express": "workspace:*",
+    "@bull-board/ui": "workspace:*",
+    "bull": "^4.16.5",
+    "bullmq": "^5.81.5",
+    "cors": "^2.8.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

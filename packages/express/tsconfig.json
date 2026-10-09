@@ -6,7 +6,7 @@
     "module": "CommonJS",
     "rootDir": "./src",
     "noImplicitAny": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "strict": true,
     "target": "es2019",
     "noUnusedParameters": true,
