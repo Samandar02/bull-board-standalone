@@ -78,11 +78,12 @@ export class Api {
     if (this.basePath === '/') this.basePath = '';
 
     this.axios = Axios.create({ baseURL: `${this.basePath}api` });
-    
+
     this.axios.interceptors.request.use((config) => {
       // If an instance is active and request is not for instances API
       if (this.activeInstanceId && !config.url?.startsWith('/instances')) {
-        config.baseURL = `${this.basePath}/api/instances/${this.activeInstanceId}/board/api`.replace('//', '/');
+        config.baseURL =
+          `${this.basePath}/api/instances/${this.activeInstanceId}/board/api`.replace('//', '/');
         if (this.activeDb !== null && this.activeDb !== undefined) {
           config.headers['x-redis-db'] = String(this.activeDb);
         }
@@ -143,7 +144,6 @@ export class Api {
   public getInstanceDatabases(id: string): Promise<RedisDatabaseInfoDTO[]> {
     return this.axios.get(`/instances/${id}/databases`);
   }
-
 
   public getQueues({
     activeQueue,

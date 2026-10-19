@@ -12,12 +12,7 @@ interface InstanceModalProps {
   onSaved: (savedInstance: RedisInstanceDTO, connectDirectly?: boolean) => void;
 }
 
-export const InstanceModal = ({
-  open,
-  instance,
-  onClose,
-  onSaved,
-}: InstanceModalProps) => {
+export const InstanceModal = ({ open, instance, onClose, onSaved }: InstanceModalProps) => {
   const api = useApi();
   const isEditing = Boolean(instance);
 
@@ -46,7 +41,7 @@ export const InstanceModal = ({
       setPort(String(instance.port || 6379));
       setDb(String(instance.db !== undefined ? instance.db : 0));
       setUsername(instance.username || '');
-      setPassword(instance.hasPassword ? '••••••••' : (instance.password || ''));
+      setPassword(instance.hasPassword ? '••••••••' : instance.password || '');
       setPrefix(instance.prefix || 'bull');
       setTls(Boolean(instance.tls));
     } else {
@@ -70,7 +65,7 @@ export const InstanceModal = ({
         host: host.trim() || 'localhost',
         port: parseInt(port, 10) || 6379,
         username: username.trim() || undefined,
-        password: password && password !== '••••••••' ? password : (instance?.password || undefined),
+        password: password && password !== '••••••••' ? password : instance?.password || undefined,
         db: parseInt(db, 10) || 0,
         tls,
       });
@@ -150,7 +145,13 @@ export const InstanceModal = ({
               value={host}
               onChange={(e) => setHost(e.target.value)}
             />
-            <span style={{ fontSize: '0.725rem', color: 'var(--muted-foreground)', marginTop: '0.15rem' }}>
+            <span
+              style={{
+                fontSize: '0.725rem',
+                color: 'var(--muted-foreground)',
+                marginTop: '0.15rem',
+              }}
+            >
               Docker-dan host Redis-ga ulanish: <code>host.docker.internal</code>
             </span>
           </div>
@@ -182,7 +183,19 @@ export const InstanceModal = ({
           </div>
           <div className={s.formGroup}>
             <label className={s.label}>Prefix Discovery</label>
-            <div style={{ padding: '0.625rem 0.75rem', background: 'var(--card)', borderRadius: '6px', fontSize: '0.8125rem', color: 'var(--muted-foreground)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', height: '38px' }}>
+            <div
+              style={{
+                padding: '0.625rem 0.75rem',
+                background: 'var(--card)',
+                borderRadius: '6px',
+                fontSize: '0.8125rem',
+                color: 'var(--muted-foreground)',
+                border: '1px dashed var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                height: '38px',
+              }}
+            >
               ⚡ Auto-detects all prefixes
             </div>
           </div>
@@ -230,7 +243,9 @@ export const InstanceModal = ({
                 {testResult.version ? ` • Redis v${testResult.version}` : ''}
               </span>
             ) : (
-              <span>✕ <strong>Connection failed:</strong> {testResult.error}</span>
+              <span>
+                ✕ <strong>Connection failed:</strong> {testResult.error}
+              </span>
             )}
           </div>
         )}
@@ -246,11 +261,7 @@ export const InstanceModal = ({
           </Button>
 
           <div className={s.actionButtons}>
-            <Button
-              type="button"
-              theme="basic"
-              onClick={onClose}
-            >
+            <Button type="button" theme="basic" onClick={onClose}>
               Cancel
             </Button>
             <Button

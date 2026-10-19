@@ -8,10 +8,9 @@ import { DocsIcon } from '../Icons/Docs';
 import { FullscreenIcon } from '../Icons/Fullscreen';
 import { RedisIcon } from '../Icons/Redis';
 import { Settings } from '../Icons/Settings';
+import { InstanceSwitcher } from '../InstanceSwitcher/InstanceSwitcher';
 import buttonStyles from '../Button/Button.module.css';
 import s from './HeaderActions.module.css';
-
-import { InstanceSwitcher } from '../InstanceSwitcher/InstanceSwitcher';
 
 type ModalTypes = 'redis' | 'settings';
 

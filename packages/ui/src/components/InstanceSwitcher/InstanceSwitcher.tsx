@@ -1,6 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../hooks/useApi';
 import { useInstanceStore } from '../../hooks/useInstanceStore';
 import { RedisInstanceDTO } from '../../services/Api';

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { instanceStore, RedisInstanceRecord } from '../db/instanceStore.js';
-import { redisManager } from '../services/redisManager.js';
 import { boardManager } from '../services/boardManager.js';
+import { redisManager } from '../services/redisManager.js';
 
 export const instanceRouter = Router();
 
@@ -17,7 +17,7 @@ function sanitizeInstance(instance: RedisInstanceRecord) {
 instanceRouter.get('/', async (_req: Request, res: Response) => {
   try {
     const instances = instanceStore.getAll();
-    
+
     // Enrich with quick ping status
     const enriched = await Promise.all(
       instances.map(async (inst) => {
@@ -94,7 +94,7 @@ instanceRouter.put('/:id', (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { name, host, port, username, password, db, tls, prefix } = req.body;
-    
+
     // If password was sent as mask placeholder or undefined, don't overwrite with placeholder
     const updateData: any = { name, host, port, username, db, tls, prefix };
     if (password !== undefined && password !== '••••••••') {

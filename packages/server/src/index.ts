@@ -1,10 +1,10 @@
-import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from 'cors';
 import ejs from 'ejs';
-import { instanceRouter } from './routes/instanceRoutes.js';
+import express from 'express';
 import { boardRouter } from './routes/boardRoutes.js';
+import { instanceRouter } from './routes/instanceRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

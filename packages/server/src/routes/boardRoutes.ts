@@ -8,7 +8,8 @@ boardRouter.use('/:instanceId/board', async (req: Request, res: Response, next: 
   try {
     const instanceId = req.params.instanceId as string;
     const dbQuery = req.query.db !== undefined ? Number(req.query.db) : undefined;
-    const dbHeader = req.headers['x-redis-db'] !== undefined ? Number(req.headers['x-redis-db']) : undefined;
+    const dbHeader =
+      req.headers['x-redis-db'] !== undefined ? Number(req.headers['x-redis-db']) : undefined;
     const db = dbQuery !== undefined ? dbQuery : dbHeader;
     const forceRefresh = req.query.refresh === 'true';
 

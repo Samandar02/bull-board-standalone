@@ -1,9 +1,9 @@
 import { createBullBoard } from '@bull-board/api';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
-import { Queue as QueueMQ } from 'bullmq';
 import QueueBull from 'bull';
+import { Queue as QueueMQ } from 'bullmq';
 import { Router } from 'express';
 import { instanceStore } from '../db/instanceStore.js';
 import { redisManager } from './redisManager.js';
@@ -23,7 +23,11 @@ export class BoardManager {
     return `${instanceId}::${db}`;
   }
 
-  public async getBoardRouter(instanceId: string, overrideDb?: number, forceRefresh = false): Promise<Router> {
+  public async getBoardRouter(
+    instanceId: string,
+    overrideDb?: number,
+    forceRefresh = false
+  ): Promise<Router> {
     const instance = instanceStore.getById(instanceId);
     if (!instance) {
       throw new Error(`Instance ${instanceId} not found`);
@@ -57,9 +61,7 @@ export class BoardManager {
         uiConfig: {
           boardTitle: `${instance.name} (DB ${db})`,
           overview: { groupByDelimiter: true },
-          miscLinks: [
-            { text: 'Instances List', url: '/instances' },
-          ],
+          miscLinks: [{ text: 'Instances List', url: '/instances' }],
         },
       },
     });

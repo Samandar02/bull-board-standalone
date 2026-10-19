@@ -1,5 +1,5 @@
-import { Redis, RedisOptions } from 'ioredis';
 import fs from 'node:fs';
+import { Redis, RedisOptions } from 'ioredis';
 import { RedisInstanceRecord, instanceStore } from '../db/instanceStore.js';
 
 export interface DiscoveredQueue {
@@ -161,56 +161,88 @@ export class RedisManager {
     return this.parseKeyspaceInfo(keyspaceInfo);
   }
 
+  private parseQueueKey(
+    key: string,
+    marker: 'meta' | 'id'
+  ): { prefix: string; name: string } | null {
+    const suffix = `:${marker}`;
+    if (!key.endsWith(suffix)) return null;
+
+    const body = key.slice(0, -suffix.length);
+    if (!body) return null;
+
+    const lastColon = body.lastIndexOf(':');
+    if (lastColon === -1) {
+      // Prefikssiz, masalan: "myQueue:meta" yoki "myQueue:id"
+      return { prefix: '', name: body };
+    }
+
+    const prefix = body.slice(0, lastColon);
+    const name = body.slice(lastColon + 1);
+    if (!name) return null;
+
+    return { prefix, name };
+  }
+
+  private async scanKeysPattern(
+    client: Redis,
+    pattern: string,
+    onKeys: (keys: string[]) => void
+  ): Promise<void> {
+    let cursor = '0';
+    let iterations = 0;
+    const maxIterations = 2000; // Safeguard up to 2,000,000 keys
+
+    do {
+      const [nextCursor, keys] = await client.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+      cursor = nextCursor;
+      iterations++;
+
+      if (keys.length > 0) {
+        onKeys(keys);
+      }
+    } while (cursor !== '0' && iterations < maxIterations);
+  }
+
   public async discoverQueues(instanceId: string, overrideDb?: number): Promise<DiscoveredQueue[]> {
     try {
       const client = await this.getClient(instanceId, overrideDb);
       const discoveredMap = new Map<string, DiscoveredQueue>();
+      const bullmqKeys = new Set<string>();
 
-      // Fast scan of keys with cursor
-      let cursor = '0';
-      const pattern = '*';
-      let iterations = 0;
-      const maxIterations = 100; // Scan up to 100,000 keys
-
-      do {
-        const [nextCursor, keys] = await client.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
-        cursor = nextCursor;
-        iterations++;
-
+      // 1. BullMQ navbatlarini *:meta patterni orqali SCAN qilish
+      await this.scanKeysPattern(client, '*:meta', (keys) => {
         for (const k of keys) {
-          // BullMQ queue metadata pattern: <prefix>:<queueName>:meta or <queueName>:meta
-          if (k.endsWith(':meta')) {
-            const parts = k.split(':');
-            if (parts.length >= 2) {
-              const queueName = parts[parts.length - 2];
-              const prefix = parts.length > 2 ? parts.slice(0, parts.length - 2).join(':') : '';
-              const key = `${prefix}::${queueName}`;
+          const parsed = this.parseQueueKey(k, 'meta');
+          if (parsed) {
+            const key = `${parsed.prefix}::${parsed.name}`;
+            bullmqKeys.add(key);
+            discoveredMap.set(key, {
+              name: parsed.name,
+              prefix: parsed.prefix,
+              type: 'bullmq',
+            });
+          }
+        }
+      });
+
+      // 2. Bull (v3/v4) navbatlarini *:id patterni orqali SCAN qilish
+      await this.scanKeysPattern(client, '*:id', (keys) => {
+        for (const k of keys) {
+          const parsed = this.parseQueueKey(k, 'id');
+          if (parsed) {
+            const key = `${parsed.prefix}::${parsed.name}`;
+            // Agar navbat BullMQ sifatida topilgan bo'lsa, qayta yozilmaydi
+            if (!bullmqKeys.has(key) && !discoveredMap.has(key)) {
               discoveredMap.set(key, {
-                name: queueName,
-                prefix,
-                type: 'bullmq',
+                name: parsed.name,
+                prefix: parsed.prefix,
+                type: 'bull',
               });
             }
           }
-          // Bull v3/v4 queue pattern: <prefix>:<queueName>:id or :waiting or :active
-          else if (k.endsWith(':waiting') || k.endsWith(':id') || k.endsWith(':active') || k.endsWith(':delayed')) {
-            const parts = k.split(':');
-            if (parts.length >= 2) {
-              const queueName = parts[parts.length - 2];
-              const prefix = parts.length > 2 ? parts.slice(0, parts.length - 2).join(':') : '';
-              const key = `${prefix}::${queueName}`;
-              // Only add if not already registered (or if registered as bull, keep it)
-              if (!discoveredMap.has(key)) {
-                discoveredMap.set(key, {
-                  name: queueName,
-                  prefix,
-                  type: 'bull',
-                });
-              }
-            }
-          }
         }
-      } while (cursor !== '0' && iterations < maxIterations);
+      });
 
       // Return queues sorted by prefix then queue name
       const result = Array.from(discoveredMap.values());

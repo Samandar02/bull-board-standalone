@@ -1,7 +1,7 @@
-import { DatabaseSync } from 'node:sqlite';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 
 export interface RedisInstanceRecord {
   id: string;
@@ -62,36 +62,33 @@ class InstanceStore {
     `);
 
     // Seed default instance if empty
-    const countRow = this.db.prepare('SELECT COUNT(*) as count FROM instances').get() as { count: number | bigint };
+    const countRow = this.db.prepare('SELECT COUNT(*) as count FROM instances').get() as {
+      count: number | bigint;
+    };
     if (Number(countRow.count) === 0) {
       const now = new Date().toISOString();
       const isDocker = fs.existsSync('/.dockerenv');
-      const defaultHost = process.env.REDIS_HOST || (isDocker ? 'host.docker.internal' : 'localhost');
-      this.db.prepare(`
+      const defaultHost =
+        process.env.REDIS_HOST || (isDocker ? 'host.docker.internal' : 'localhost');
+      this.db
+        .prepare(`
         INSERT INTO instances (id, name, host, port, username, password, db, tls, prefix, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        'local-default',
-        'Local Redis',
-        defaultHost,
-        6379,
-        '',
-        '',
-        0,
-        0,
-        'bull',
-        now,
-        now
-      );
+      `)
+        .run('local-default', 'Local Redis', defaultHost, 6379, '', '', 0, 0, 'bull', now, now);
     }
   }
 
   public getAll(): RedisInstanceRecord[] {
-    return this.db.prepare('SELECT * FROM instances ORDER BY created_at ASC').all() as unknown as RedisInstanceRecord[];
+    return this.db
+      .prepare('SELECT * FROM instances ORDER BY created_at ASC')
+      .all() as unknown as RedisInstanceRecord[];
   }
 
   public getById(id: string): RedisInstanceRecord | undefined {
-    return this.db.prepare('SELECT * FROM instances WHERE id = ?').get(id) as unknown as RedisInstanceRecord | undefined;
+    return this.db.prepare('SELECT * FROM instances WHERE id = ?').get(id) as unknown as
+      | RedisInstanceRecord
+      | undefined;
   }
 
   public create(data: CreateInstanceDTO): RedisInstanceRecord {
@@ -106,10 +103,12 @@ class InstanceStore {
     const tls = data.tls ? 1 : 0;
     const prefix = data.prefix?.trim() || 'bull';
 
-    this.db.prepare(`
+    this.db
+      .prepare(`
       INSERT INTO instances (id, name, host, port, username, password, db, tls, prefix, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, name, host, port, username, password, db, tls, prefix, now, now);
+    `)
+      .run(id, name, host, port, username, password, db, tls, prefix, now, now);
 
     return this.getById(id)!;
   }
@@ -119,20 +118,22 @@ class InstanceStore {
     if (!existing) return undefined;
 
     const now = new Date().toISOString();
-    const host = data.host !== undefined ? (data.host.trim() || 'localhost') : existing.host;
-    const port = data.port !== undefined ? (Number(data.port) || 6379) : existing.port;
-    const name = data.name !== undefined ? (data.name.trim() || `${host}:${port}`) : existing.name;
-    const username = data.username !== undefined ? data.username.trim() : (existing.username || '');
-    const password = data.password !== undefined ? data.password : (existing.password || '');
-    const db = data.db !== undefined ? (Number(data.db) || 0) : existing.db;
+    const host = data.host !== undefined ? data.host.trim() || 'localhost' : existing.host;
+    const port = data.port !== undefined ? Number(data.port) || 6379 : existing.port;
+    const name = data.name !== undefined ? data.name.trim() || `${host}:${port}` : existing.name;
+    const username = data.username !== undefined ? data.username.trim() : existing.username || '';
+    const password = data.password !== undefined ? data.password : existing.password || '';
+    const db = data.db !== undefined ? Number(data.db) || 0 : existing.db;
     const tls = data.tls !== undefined ? (data.tls ? 1 : 0) : existing.tls;
-    const prefix = data.prefix !== undefined ? (data.prefix.trim() || 'bull') : existing.prefix;
+    const prefix = data.prefix !== undefined ? data.prefix.trim() || 'bull' : existing.prefix;
 
-    this.db.prepare(`
+    this.db
+      .prepare(`
       UPDATE instances
       SET name = ?, host = ?, port = ?, username = ?, password = ?, db = ?, tls = ?, prefix = ?, updated_at = ?
       WHERE id = ?
-    `).run(name, host, port, username, password, db, tls, prefix, now, id);
+    `)
+      .run(name, host, port, username, password, db, tls, prefix, now, id);
 
     return this.getById(id);
   }

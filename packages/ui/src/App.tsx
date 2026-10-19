@@ -61,7 +61,9 @@ export const App = () => {
   useSearchHotkey();
 
   useEffect(() => {
-    document.body.dataset.sidebarCollapsed = String(!isMobile && (sidebarCollapsed || isInstancesPage));
+    document.body.dataset.sidebarCollapsed = String(
+      !isMobile && (sidebarCollapsed || isInstancesPage)
+    );
     requestAnimationFrame(() => document.body.classList.remove('preload'));
     return () => {
       delete document.body.dataset.sidebarCollapsed;

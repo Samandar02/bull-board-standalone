@@ -164,9 +164,7 @@ export const InstancesPage = () => {
                       {inst.host}:{inst.port}
                     </span>
                   </div>
-                  <span
-                    className={`${s.badge} ${inst.status === 'online' ? s.online : s.offline}`}
-                  >
+                  <span className={`${s.badge} ${inst.status === 'online' ? s.online : s.offline}`}>
                     ● {inst.status === 'online' ? `${inst.latencyMs ?? ''}ms` : 'Offline'}
                   </span>
                 </div>
@@ -178,7 +176,9 @@ export const InstancesPage = () => {
                   </div>
                   <div className={s.detailItem}>
                     <span className={s.detailLabel}>Prefixes</span>
-                    <span className={s.detailValue} style={{ color: 'var(--primary)' }}>Auto-Detect</span>
+                    <span className={s.detailValue} style={{ color: 'var(--primary)' }}>
+                      Auto-Detect
+                    </span>
                   </div>
                   <div className={s.detailItem}>
                     <span className={s.detailLabel}>Version</span>
@@ -201,11 +201,7 @@ export const InstancesPage = () => {
                 </button>
 
                 <div className={s.iconButtons}>
-                  <Button
-                    theme="basic"
-                    title="Test connection"
-                    onClick={() => handleTest(inst)}
-                  >
+                  <Button theme="basic" title="Test connection" onClick={() => handleTest(inst)}>
                     Ping
                   </Button>
                   <Button
