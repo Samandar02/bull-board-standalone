@@ -4,7 +4,7 @@ description: >-
   Use this skill when integrating, instantiating, configuring, debugging, or operating Bull (v3/v4) queues on the server backend.
 ---
 
-# Bull (v3/v4) Server Queue Management Guide
+# Bull (v3/v4) Server Queue Management & Inspection Guide
 
 This runbook guides agents on how to instantiate, manage, discover, and operate **Bull (v3/v4)** queues within `@bull-board/server` and `@bull-board/api`.
 
@@ -12,15 +12,15 @@ This runbook guides agents on how to instantiate, manage, discover, and operate 
 
 ## 1. Bull vs BullMQ Architecture Comparison
 
-Bull (v3/v4) and BullMQ differ in their Redis key layout, connection options, and feature sets:
+Bull (v3/v4) and BullMQ differ in their Redis key layout, connection models, and internal data structures:
 
 | Feature | Bull (v3/v4) | BullMQ (v5/v6) |
 | :--- | :--- | :--- |
 | **Constructor** | `new Queue(name, { redis: redisOpts, prefix })` | `new Queue(name, { connection: redisOpts, prefix })` |
-| **Redis Connections** | Creates multiple connections (client, subscriber, bclient) | Connection reuse via shared `ioredis` instance |
-| **Discovery Keys** | `<prefix>:<queueName>:id`, `:waiting`, `:active`, `:delayed` | `<prefix>:<queueName>:meta` |
+| **Redis Connections** | Opens 3 connections per queue (client, subscriber, bclient) | Connection reuse via shared `ioredis` instance |
+| **Discovery Markers** | `<prefix>:<queueName>:id` (counter) & `:waiting` | `<prefix>:<queueName>:meta` (hash) |
 | **Adapter Class** | `BullAdapter` (from `@bull-board/api/bullAdapter`) | `BullMQAdapter` (from `@bull-board/api/bullMQAdapter`) |
-| **Completed Retries**| `allowCompletedRetries: false` (by default) | Native retry supported for completed jobs |
+| **Completed Retries**| `allowCompletedRetries: false` (disabled by default) | Native retry supported for completed jobs |
 | **Repeatable Format**| Key-based: `repeat: { cron, every, key }` | Schedulers API & repeat configs |
 
 ---
@@ -56,30 +56,67 @@ export function createBullQueueInstance(queueName: string, prefix = 'bull', redi
 
 ---
 
-## 3. Auto-Discovery & Redis Key Signatures
+## 3. High-Performance Pattern-Based Queue Discovery
 
-In `packages/server/src/services/redisManager.ts`, Bull queues are automatically detected through non-blocking `SCAN`:
+In `packages/server/src/services/redisManager.ts`, queue auto-discovery avoids slow `MATCH *` iteration in favor of pattern-based scanning:
+
+### A. Non-blocking Parallel Scan
+- **BullMQ**: Keys matching `*:meta`.
+- **Bull (v3/v4)**: Keys matching `*:id` (primary counter) and `*:waiting` (fallback for fresh queues).
+- Executed concurrently via `Promise.all`:
 
 ```typescript
-// Bull v3/v4 queue key pattern detection
-if (k.endsWith(':waiting') || k.endsWith(':id') || k.endsWith(':active') || k.endsWith(':delayed')) {
-  const parts = k.split(':');
-  if (parts.length >= 2) {
-    const queueName = parts[parts.length - 2];
-    const prefix = parts.length > 2 ? parts.slice(0, parts.length - 2).join(':') : '';
-    // Register as Bull queue
-  }
-}
+await Promise.all([
+  this.scanKeysPattern(client, '*:meta', handleBullMQKeys),
+  this.scanKeysPattern(client, '*:id', handleBullKeys),
+  this.scanKeysPattern(client, '*:waiting', handleBullKeys),
+]);
 ```
 
-- **Prefix handling**: If a key is `bull:orders:waiting`, prefix is `'bull'` and queue name is `'orders'`.
-- If custom prefix is used (e.g., `app:payments:active`), prefix is `'app'` and queue name is `'payments'`.
+### B. Colon-Delimited Names & Configured Prefixes
+When queue names contain colons (e.g. `bull:tenant:1:orders:id`):
+1. If the instance specifies a `prefix` (e.g. `bull`): strip the prefix from the beginning so the resulting queue name remains `tenant:1:orders`.
+2. If prefix is unknown or wild, split at the last colon (`lastIndexOf(':')`).
+3. If a queue was already registered as BullMQ via `:meta`, it is excluded from Bull discovery to prevent duplicate entries.
 
 ---
 
-## 4. Wrapping with `BullAdapter`
+## 4. On-Demand Discovery & Router Caching
 
-To display Bull queues inside the Bull-Board UI, adapt them using `BullAdapter`:
+To prevent stale router caches from hiding newly added queues:
+
+1. **Board Caching (60s default)**:
+   Routers are cached in memory for 60 seconds to prevent Redis discovery overhead on every HTTP poll.
+2. **Missing Queue Detection (`targetQueue`)**:
+   In `packages/server/src/routes/boardRoutes.ts` and `boardManager.ts`:
+   When a user navigates to `/queue/:name` (`activeQueue` query param), if the requested queue is **missing in the cached board**, an **on-demand rescan** is immediately triggered, bypassing the 60s cache and ensuring zero missing queues.
+3. **Manual Refresh**:
+   Requesting `?refresh=true` forces an immediate rescan of all queues in the instance.
+
+---
+
+## 5. Job Inspection & Retrieval Performance (`getJobs`)
+
+When a user opens a queue page, the dashboard fetches the list of jobs:
+
+### Redis Internal Structure
+- Job states (`waiting`, `active`, `completed`, `failed`, `delayed`) are stored as **Redis ZSETs** (Sorted Sets) or **LISTs**. Only the `jobId` and score (timestamp) reside in the set.
+- The actual job payload, stacktraces, and options are stored in separate **HASH** keys (`<prefix>:<name>:<jobId>`).
+
+### Pagination Mechanics
+- The Bull-Board backend requests jobs using pagination: `queue.getJobs(statuses, start, end)`.
+- Complexity is **$O(\log(N) + M)$** where $N$ is total queue size (e.g. 1,000,000) and $M$ is page size (default 10).
+- Only the 10 corresponding HASH objects are fetched in a single Redis pipeline.
+- Overview cards (`/board`) do not fetch job arrays at all; they only call `queue.getJobCounts()` (`ZCARD` / `LLEN` — **$O(1)$**).
+
+> [!WARNING]
+> If producer applications store huge binary data (e.g., base64 images or multi-megabyte payloads) directly in job `data`, fetching 10 jobs can consume bandwidth. Always recommend storing large blobs in S3/disk and passing references in the job payload.
+
+---
+
+## 6. Wrapping with `BullAdapter`
+
+To display Bull queues inside Bull-Board, adapt them using `BullAdapter`:
 
 ```typescript
 import { BullAdapter } from '@bull-board/api/bullAdapter';
@@ -106,7 +143,7 @@ const adapter = new BullAdapter(bullQueue, {
 
 ---
 
-## 5. Performing Job Operations
+## 7. Performing Job Operations
 
 When executing actions via Bull API:
 
@@ -115,7 +152,7 @@ When executing actions via Bull API:
 await queue.add('sendWelcomeEmail', { userId: '123' }, {
   attempts: 3,
   backoff: { type: 'exponential', delay: 1000 },
-  delay: 5000, // delay 5 seconds
+  delay: 5000,
 });
 ```
 
@@ -129,44 +166,41 @@ if (job) {
 
 ### Cleaning Jobs
 ```typescript
-// Clean completed or failed jobs older than grace period
 await queue.clean(60000, 'completed');
 await queue.clean(60000, 'failed');
 ```
 
-### Inspecting Repeatable / Cron Jobs
+### Repeatable / Cron Schedulers
 ```typescript
 const repeatableJobs = await queue.getRepeatableJobs();
-// Remove a repeatable job
 await queue.removeRepeatableByKey(repeatableJobKey);
 ```
 
 ---
 
-## 6. Connection Pool & Clean-up Lifecycle
+## 8. Connection Pool & Clean-up Lifecycle
 
-Because Bull queues open background event listeners and Redis connections, unmanaged instances cause connection exhaustion.
+Because Bull creates 3 Redis client connections per queue instance, unmanaged instances will cause connection leaks:
 
-In `packages/server/src/services/boardManager.ts`:
-1. **Cache Instances**: Cache active `Queue` objects in a `Map<string, { queue, adapter }>`.
-2. **Close Stale Queues**: When a queue is deleted from Redis or when refreshing:
+1. **Cache Instances**: Cache active `Queue` objects in `BoardManager`'s `queues: Map<string, { queue, adapter }>`.
+2. **Close Stale Queues**: When a queue disappears from Redis or during rescan:
    ```typescript
    if (typeof queue?.close === 'function') {
      await queue.close();
    }
    ```
-3. **Instance Invalidation**: On server shutdown or instance update, call:
+3. **Instance Invalidation**: When modifying or deleting a Redis instance in the dashboard:
    ```typescript
    boardManager.invalidateInstance(instanceId);
    ```
 
 ---
 
-## 7. Troubleshooting Bull Server Issues
+## 9. Troubleshooting Checklist
 
-1. **Missing Jobs in Dashboard**:
-   - Verify Redis DB index (`db: 0-15`). Bull does not search across all DBs; it targets the specific DB specified in options.
-2. **Prefix Mismatch**:
-   - If keys exist as `myprefix:queueName:*`, ensure the queue was instantiated with `{ prefix: 'myprefix' }`.
-3. **MaxListenersExceededWarning**:
-   - Occurs when many Bull queues attach event listeners without reusing Redis connections. Always invoke `queue.close()` when removing or updating queues.
+1. **Queue Not Showing in Dashboard**:
+   - Check if Redis DB matches (`db: 0-15`). Bull does not query across multiple DBs.
+   - Verify prefix matching. If custom prefix is used, make sure it matches the instance settings.
+   - If queue was just created, check if `activeQueue` on-demand rescan triggered or click "Refresh Queues".
+2. **`MaxListenersExceededWarning`**:
+   - Ensure `queue.close()` is called on deleted or replaced queue instances.
