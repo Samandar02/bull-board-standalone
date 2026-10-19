@@ -26,7 +26,8 @@ export class BoardManager {
   public async getBoardRouter(
     instanceId: string,
     overrideDb?: number,
-    forceRefresh = false
+    forceRefresh = false,
+    targetQueue?: string
   ): Promise<Router> {
     const instance = instanceStore.getById(instanceId);
     if (!instance) {
@@ -38,8 +39,14 @@ export class BoardManager {
     const cached = this.boardsCache.get(cacheKey);
 
     const now = Date.now();
-    // Cache for 60 seconds unless forced
-    if (cached && !forceRefresh && now - cached.lastScannedAt < 60000) {
+    // Agar aniq bir navbat so'ralgan bo'lsa va u keshda mavjud bo'lmasa, darhol yangilash
+    const queueMissingInCache =
+      Boolean(targetQueue) &&
+      Boolean(cached) &&
+      !Array.from(cached!.queues.keys()).some((k) => k.includes(`::${targetQueue}::`));
+
+    // Cache for 60 seconds unless forced or target queue missing
+    if (cached && !forceRefresh && !queueMissingInCache && now - cached.lastScannedAt < 60000) {
       return cached.router;
     }
 

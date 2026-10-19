@@ -12,8 +12,9 @@ boardRouter.use('/:instanceId/board', async (req: Request, res: Response, next: 
       req.headers['x-redis-db'] !== undefined ? Number(req.headers['x-redis-db']) : undefined;
     const db = dbQuery !== undefined ? dbQuery : dbHeader;
     const forceRefresh = req.query.refresh === 'true';
+    const targetQueue = req.query.activeQueue ? String(req.query.activeQueue) : undefined;
 
-    const router = await boardManager.getBoardRouter(instanceId, db, forceRefresh);
+    const router = await boardManager.getBoardRouter(instanceId, db, forceRefresh, targetQueue);
     return router(req, res, next);
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Error executing board operation' });

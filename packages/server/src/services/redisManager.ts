@@ -163,7 +163,8 @@ export class RedisManager {
 
   private parseQueueKey(
     key: string,
-    marker: 'meta' | 'id'
+    marker: string,
+    configuredPrefix?: string
   ): { prefix: string; name: string } | null {
     const suffix = `:${marker}`;
     if (!key.endsWith(suffix)) return null;
@@ -171,9 +172,15 @@ export class RedisManager {
     const body = key.slice(0, -suffix.length);
     if (!body) return null;
 
+    // 1. Agar instance uchun ma'lum prefix berilgan bo'lsa va kalit shu prefix bilan boshlansa
+    if (configuredPrefix && configuredPrefix !== '*' && body.startsWith(`${configuredPrefix}:`)) {
+      const name = body.slice(configuredPrefix.length + 1);
+      return name ? { prefix: configuredPrefix, name } : null;
+    }
+
+    // 2. Prefikssiz yoki boshqa ixtiyoriy prefiks: oxirgi ':' bo'yicha ajratish
     const lastColon = body.lastIndexOf(':');
     if (lastColon === -1) {
-      // Prefikssiz, masalan: "myQueue:meta" yoki "myQueue:id"
       return { prefix: '', name: body };
     }
 
@@ -206,43 +213,64 @@ export class RedisManager {
 
   public async discoverQueues(instanceId: string, overrideDb?: number): Promise<DiscoveredQueue[]> {
     try {
+      const instance = instanceStore.getById(instanceId);
+      const configuredPrefix = instance?.prefix || 'bull';
       const client = await this.getClient(instanceId, overrideDb);
       const discoveredMap = new Map<string, DiscoveredQueue>();
       const bullmqKeys = new Set<string>();
 
-      // 1. BullMQ navbatlarini *:meta patterni orqali SCAN qilish
-      await this.scanKeysPattern(client, '*:meta', (keys) => {
-        for (const k of keys) {
-          const parsed = this.parseQueueKey(k, 'meta');
-          if (parsed) {
-            const key = `${parsed.prefix}::${parsed.name}`;
-            bullmqKeys.add(key);
-            discoveredMap.set(key, {
-              name: parsed.name,
-              prefix: parsed.prefix,
-              type: 'bullmq',
-            });
-          }
-        }
-      });
-
-      // 2. Bull (v3/v4) navbatlarini *:id patterni orqali SCAN qilish
-      await this.scanKeysPattern(client, '*:id', (keys) => {
-        for (const k of keys) {
-          const parsed = this.parseQueueKey(k, 'id');
-          if (parsed) {
-            const key = `${parsed.prefix}::${parsed.name}`;
-            // Agar navbat BullMQ sifatida topilgan bo'lsa, qayta yozilmaydi
-            if (!bullmqKeys.has(key) && !discoveredMap.has(key)) {
+      // Parallel tarzda BullMQ (*:meta) va Bull (*:id, *:waiting) kalitlarini skan qilish
+      await Promise.all([
+        // 1. BullMQ navbatlari
+        this.scanKeysPattern(client, '*:meta', (keys) => {
+          for (const k of keys) {
+            const parsed = this.parseQueueKey(k, 'meta', configuredPrefix);
+            if (parsed) {
+              const key = `${parsed.prefix}::${parsed.name}`;
+              bullmqKeys.add(key);
               discoveredMap.set(key, {
                 name: parsed.name,
                 prefix: parsed.prefix,
-                type: 'bull',
+                type: 'bullmq',
               });
             }
           }
-        }
-      });
+        }),
+
+        // 2. Bull (v3/v4) navbatlari - asosiy counter (:id)
+        this.scanKeysPattern(client, '*:id', (keys) => {
+          for (const k of keys) {
+            const parsed = this.parseQueueKey(k, 'id', configuredPrefix);
+            if (parsed) {
+              const key = `${parsed.prefix}::${parsed.name}`;
+              if (!bullmqKeys.has(key) && !discoveredMap.has(key)) {
+                discoveredMap.set(key, {
+                  name: parsed.name,
+                  prefix: parsed.prefix,
+                  type: 'bull',
+                });
+              }
+            }
+          }
+        }),
+
+        // 3. Bull (v3/v4) - kutayotgan navbatlar fallback (:waiting)
+        this.scanKeysPattern(client, '*:waiting', (keys) => {
+          for (const k of keys) {
+            const parsed = this.parseQueueKey(k, 'waiting', configuredPrefix);
+            if (parsed) {
+              const key = `${parsed.prefix}::${parsed.name}`;
+              if (!bullmqKeys.has(key) && !discoveredMap.has(key)) {
+                discoveredMap.set(key, {
+                  name: parsed.name,
+                  prefix: parsed.prefix,
+                  type: 'bull',
+                });
+              }
+            }
+          }
+        }),
+      ]);
 
       // Return queues sorted by prefix then queue name
       const result = Array.from(discoveredMap.values());
