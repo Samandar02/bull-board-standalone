@@ -22,6 +22,13 @@ app.use(express.json());
 const uiDistPath = path.resolve(__dirname, '../../ui/dist');
 app.use('/static', express.static(path.join(uiDistPath, 'static')));
 
+// Docs static path: serve root docs/
+const docsPath = path.resolve(__dirname, '../../../docs');
+app.use('/docs', express.static(docsPath));
+app.get('/docs', (_req, res) => {
+  res.sendFile(path.join(docsPath, 'index.html'));
+});
+
 // Set EJS view engine
 app.engine('ejs', ejs.renderFile);
 app.set('views', uiDistPath);

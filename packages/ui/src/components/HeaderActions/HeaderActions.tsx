@@ -35,7 +35,6 @@ const onClickFullScreen = async () => {
 
 import { useLocation, NavLink } from 'react-router-dom';
 
-const DOCS_URL = 'https://felixmosh.github.io/bull-board/';
 const DOCS_LABEL = 'Docs';
 
 export const HeaderActions = () => {
@@ -43,6 +42,7 @@ export const HeaderActions = () => {
   const modal = useModal<ModalTypes>();
   const location = useLocation();
   const isInstancesPage = location.pathname === '/' || location.pathname === '/instances';
+  const docsUrl = `${(window as any).__basePath__ || ''}/docs`.replace(/\/+/g, '/');
 
   return (
     <>
@@ -85,7 +85,7 @@ export const HeaderActions = () => {
         {!hideDocsLink && (
           <li>
             <a
-              href={DOCS_URL}
+              href={docsUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={DOCS_LABEL}

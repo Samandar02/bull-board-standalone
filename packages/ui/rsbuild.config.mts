@@ -19,7 +19,10 @@ export default defineConfig({
   },
   output: {
     cleanDistPath: true,
-    copy: [{ from: './src/static/', to: './static', info: { hotModuleReplacement: false } }],
+    copy: [
+      { from: './src/static/', to: './static', info: { hotModuleReplacement: false } },
+      { from: path.resolve(__dirname, '../../docs'), to: './docs', info: { hotModuleReplacement: false } },
+    ],
     assetPrefix: 'auto',
     target: 'web',
   },
@@ -64,14 +67,15 @@ export default defineConfig({
   },
   server: {
     open: {
-      target: 'http://localhost:3000/ui',
+      target: 'http://localhost:5541',
       before: async () => {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       },
     },
     port: 9000,
     proxy: {
-      '/ui': 'http://127.0.0.1:3000',
+      '/ui': 'http://127.0.0.1:5541',
+      '/docs': 'http://127.0.0.1:5541',
     },
   },
 });

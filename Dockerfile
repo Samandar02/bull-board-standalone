@@ -54,6 +54,7 @@ COPY --from=builder /app/packages/ui/dist ./packages/ui/dist
 
 COPY --from=builder /app/packages/server/package.json ./packages/server/package.json
 COPY --from=builder /app/packages/server/dist ./packages/server/dist
+COPY --from=builder /app/docs ./docs
 
 VOLUME ["/app/data"]
 EXPOSE 5541

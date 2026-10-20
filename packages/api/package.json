@@ -14,7 +14,7 @@
   "author": "felixmosh",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Samandar02/bull-board.git",
+    "url": "git+https://github.com/Samandar02/bull-board-standalone.git",
     "directory": "packages/api"
   },
   "files": [
