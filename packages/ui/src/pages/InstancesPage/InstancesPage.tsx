@@ -37,8 +37,8 @@ export const InstancesPage = () => {
   }, []);
 
   const handleConnect = (instance: RedisInstanceDTO) => {
-    setActiveInstance(instance.id, instance.db || 0);
-    api.setInstance(instance.id, instance.db || 0);
+    setActiveInstance(instance.id, 0);
+    api.setInstance(instance.id, 0);
     history.push('/board');
   };
 
@@ -171,8 +171,8 @@ export const InstancesPage = () => {
 
                 <div className={s.cardDetails} style={{ marginTop: '1rem' }}>
                   <div className={s.detailItem}>
-                    <span className={s.detailLabel}>Database</span>
-                    <span className={s.detailValue}>DB {inst.db}</span>
+                    <span className={s.detailLabel}>Port</span>
+                    <span className={s.detailValue}>{inst.port}</span>
                   </div>
                   <div className={s.detailItem}>
                     <span className={s.detailLabel}>Prefixes</span>

@@ -1,0 +1,123 @@
+.container {
+  display: flex;
+  align-items: center;
+}
+
+.displayPill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.25rem 0.5rem;
+  height: 32px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 120ms ease;
+  color: var(--foreground);
+}
+
+.displayPill:hover {
+  background: var(--state-hover);
+  border-color: var(--border);
+}
+
+.dbText {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+}
+
+.pencilIcon {
+  font-size: 0.85rem;
+  opacity: 0.65;
+  transition: opacity 120ms ease;
+}
+
+.displayPill:hover .pencilIcon {
+  opacity: 1;
+}
+
+.editWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 32px;
+}
+
+.input {
+  width: 44px;
+  height: 32px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.btnGroup {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: color-mix(in srgb, var(--primary) 18%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.cancelBtn,
+.confirmBtn {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.55rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--foreground);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.cancelBtn:hover {
+  background: color-mix(in srgb, var(--destructive) 25%, transparent);
+  color: var(--destructive);
+}
+
+.confirmBtn {
+  border-left: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  color: var(--primary);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.confirmBtn.disabled,
+.confirmBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.icon {
+  font-size: 0.875rem;
+}

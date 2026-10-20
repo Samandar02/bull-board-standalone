@@ -10,7 +10,7 @@ export const InstanceSwitcher = () => {
   const history = useHistory();
   const api = useApi();
   const queryClient = useQueryClient();
-  const { activeInstanceId, activeDb, setActiveInstance, setActiveDb } = useInstanceStore();
+  const { activeInstanceId, activeDb, setActiveInstance } = useInstanceStore();
 
   const [isOpen, setIsOpen] = useState(false);
   const [instances, setInstances] = useState<RedisInstanceDTO[]>([]);
@@ -38,19 +38,11 @@ export const InstanceSwitcher = () => {
   const activeInstance = instances.find((i) => i.id === activeInstanceId);
 
   const handleSelectInstance = (inst: RedisInstanceDTO) => {
-    setActiveInstance(inst.id, inst.db || 0);
-    api.setInstance(inst.id, inst.db || 0);
+    setActiveInstance(inst.id, 0);
+    api.setInstance(inst.id, 0);
     queryClient.invalidateQueries();
     setIsOpen(false);
     history.push('/board');
-  };
-
-  const handleSelectDb = (dbIndex: number) => {
-    setActiveDb(dbIndex);
-    if (activeInstanceId) {
-      api.setInstance(activeInstanceId, dbIndex);
-      queryClient.invalidateQueries();
-    }
   };
 
   return (
@@ -59,11 +51,10 @@ export const InstanceSwitcher = () => {
         type="button"
         className={s.triggerButton}
         onClick={() => setIsOpen(!isOpen)}
-        title="Switch Redis Instance / Database"
+        title="Switch Redis Instance"
       >
         <span className={s.dot} />
         <span>{activeInstance ? activeInstance.name : 'Select Redis'}</span>
-        <span style={{ opacity: 0.65, fontSize: '0.75rem' }}>DB {activeDb}</span>
         <span className={`${s.chevron} ${isOpen ? s.open : ''}`}>▼</span>
       </button>
 
@@ -93,22 +84,6 @@ export const InstanceSwitcher = () => {
                   <span style={{ fontSize: '0.75rem', opacity: 0.65, fontFamily: 'monospace' }}>
                     {inst.host}:{inst.port}
                   </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={s.dropdownSection}>
-            <div className={s.sectionTitle}>Database Index (0 - 15)</div>
-            <div className={s.dbPills}>
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`${s.dbPill} ${idx === activeDb ? s.active : ''}`}
-                  onClick={() => handleSelectDb(idx)}
-                >
-                  DB {idx}
                 </button>
               ))}
             </div>

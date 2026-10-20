@@ -3,6 +3,12 @@
   margin: 0;
   list-style: none;
   display: flex;
+  align-items: center;
+}
+
+.actions li {
+  display: flex;
+  align-items: center;
 }
 
 .actions li + li {

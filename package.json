@@ -12,13 +12,13 @@
     "redis"
   ],
   "bugs": {
-    "url": "https://github.com/Samandar02/bull-board/issues"
+    "url": "https://github.com/Samandar02/bull-board-standalone/issues"
   },
   "license": "MIT",
   "author": "Samandar02",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Samandar02/bull-board.git"
+    "url": "git+https://github.com/Samandar02/bull-board-standalone.git"
   },
   "workspaces": [
     "packages/*"
@@ -27,7 +27,7 @@
     "build": "yarn workspaces foreach -A -t run build",
     "clean": "yarn workspaces foreach -A run clean",
     "start": "yarn workspace @bull-board/server start",
-    "dev": "concurrently --names \"UI,SERVER\" -c \"bgBlue.bold,bgMagenta.bold\" \"yarn dev:ui\" \"yarn dev:server\"",
+    "dev": "concurrently --names \"UI,SERVER\" -c \"bgBlue.bold,bgMagenta.bold\" \"corepack yarn dev:ui\" \"corepack yarn dev:server\"",
     "dev:docker": "docker compose -f docker-compose.redis.yml up -d",
     "dev:server": "yarn workspace @bull-board/server dev",
     "dev:ui": "yarn workspace @bull-board/ui run dev",
@@ -42,7 +42,7 @@
     "ioredis": "^6.0.0",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
-    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   },
   "resolutions": {

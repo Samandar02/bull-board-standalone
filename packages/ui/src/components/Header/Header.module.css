@@ -56,7 +56,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--body-padding);
-  overflow: hidden;
+  min-width: 0;
 }
 
 .header ~ main {

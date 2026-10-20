@@ -55,11 +55,11 @@ app.use((_req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(`====================================================`);
-  console.log(`🚀 Bull Board Standalone (Redis-Insight Edition)`);
-  console.log(`📡 Server running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-  console.log(`📁 UI Assets: ${uiDistPath}`);
-  console.log(`====================================================`);
+  console.warn(`====================================================`);
+  console.warn(`🚀 Bull Board Standalone (Redis-Insight Edition)`);
+  console.warn(`📡 Server running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  console.warn(`📁 UI Assets: ${uiDistPath}`);
+  console.warn(`====================================================`);
 });
 
 export default app;

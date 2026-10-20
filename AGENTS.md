@@ -33,7 +33,7 @@ Bull Board Standalone is a Yarn Berry monorepo providing a complete queue inspec
 # Install dependencies
 corepack yarn install
 
-# Start development (runs UI on Rsbuild and Server on ts-node-dev concurrently)
+# Start development (runs UI on Rsbuild and Server on tsx watch concurrently)
 corepack yarn dev
 
 # Start server only in dev mode

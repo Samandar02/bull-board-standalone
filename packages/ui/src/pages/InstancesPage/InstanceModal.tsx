@@ -169,19 +169,7 @@ export const InstanceModal = ({ open, instance, onClose, onSaved }: InstanceModa
         </div>
 
         <div className={s.row}>
-          <div className={s.formGroup}>
-            <label className={s.label}>Database Index (0 - 15)</label>
-            <input
-              type="number"
-              min="0"
-              max="15"
-              className={s.input}
-              placeholder="0"
-              value={db}
-              onChange={(e) => setDb(e.target.value)}
-            />
-          </div>
-          <div className={s.formGroup}>
+          <div className={s.formGroup} style={{ flex: 1 }}>
             <label className={s.label}>Prefix Discovery</label>
             <div
               style={{
@@ -193,10 +181,11 @@ export const InstanceModal = ({ open, instance, onClose, onSaved }: InstanceModa
                 border: '1px dashed var(--border)',
                 display: 'flex',
                 alignItems: 'center',
-                height: '38px',
+                height: '42px',
+                boxSizing: 'border-box',
               }}
             >
-              ⚡ Auto-detects all prefixes
+              🔍 Auto-detect Bull & BullMQ queues
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useModal } from '../../hooks/useModal';
 import { useUIConfig } from '../../hooks/useUIConfig';
 import { Button } from '../Button/Button';
 import { CustomLinksDropdown } from '../CustomLinksDropdown/CustomLinksDropdown';
+import { DatabaseSelector } from '../DatabaseSelector/DatabaseSelector';
 import { DocsIcon } from '../Icons/Docs';
 import { FullscreenIcon } from '../Icons/Fullscreen';
 import { RedisIcon } from '../Icons/Redis';
@@ -49,6 +50,11 @@ export const HeaderActions = () => {
         <li>
           <InstanceSwitcher />
         </li>
+        {!isInstancesPage && (
+          <li>
+            <DatabaseSelector />
+          </li>
+        )}
         {!isInstancesPage && (
           <li>
             <NavLink
